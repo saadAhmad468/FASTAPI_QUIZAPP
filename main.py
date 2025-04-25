@@ -4,6 +4,8 @@ from fastapi.templating import Jinja2Templates
 from backend import auth, quiz, admin
 from fastapi.responses import RedirectResponse
 
+from backend.database import Base, engine
+
 app = FastAPI()
 
 # Setup templates
@@ -28,3 +30,10 @@ async def login_page(request: Request):
 @app.get("/register")
 async def register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
+
+# Add this at the bottom of database.py
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+if __name__ == "__main__":
+    init_db()

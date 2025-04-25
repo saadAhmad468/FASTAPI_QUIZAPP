@@ -4,16 +4,21 @@ from sqlalchemy.orm import Session
 from backend import database, models, schemas
 from backend.auth import oauth2_scheme
 from jose import JWTError, jwt
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func
-import random
+from fastapi import Cookie  # <-- Add this import
+from fastapi.responses import RedirectResponse  # <-- If not already imported
 
-# Remove the prefix so we can use /dashboard directly
-router = APIRouter()  # Removed prefix="/quiz"
+router = APIRouter()
+
+# Correct template initialization (use either one)
 templates = Jinja2Templates(directory="templates")
 
-SECRET_KEY = "your_secret_key_here"  # Should match auth.py
+SECRET_KEY = "your-secret-key-123"
 ALGORITHM = "HS256"
+
+# ... rest of your existing code ...
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 def get_db():
@@ -39,21 +44,20 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 async def dashboard(
         request: Request,
         db: Session = Depends(get_db),
-        username: str = Depends(get_current_user)  # This ensures authentication
+        access_token: str = Cookie(None)  # Changed parameter name for clarity
 ):
-    # Get 5 random questions
-    questions = db.query(models.Question).order_by(func.random()).limit(5).all()
+    if not access_token:
+        return RedirectResponse("/login")
 
-    # Make sure your Question model has these fields
-    return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
-            "questions": questions,
-            "username": username  # Optional: pass username to template
-        }
-    )
-
+    try:
+        # Remove "Bearer " prefix if present
+        token = access_token.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        questions = db.query(models.Question).order_by(func.random()).limit(5).all()
+        return templates.TemplateResponse("dashboard.html", {"request": request, "questions": questions})
+    except JWTError:
+        return RedirectResponse("/login")
 
 @router.post("/submit")
 async def submit_answers(

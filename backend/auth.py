@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from backend import schemas, models, database, utils
+from fastapi import Response  # <-- Add this import
+from fastapi import APIRouter, Depends, HTTPException, status
 
-SECRET_KEY = "your_secret_key_here"
+SECRET_KEY = "your-secret-key-123"  # Must match exactly
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -46,10 +48,27 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
     return db_user
 
+
 @router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login(
+        response: Response,
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        db: Session = Depends(get_db)
+):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
+
     access_token = create_access_token(data={"sub": user.username})
+
+    # Set secure HTTP-only cookie
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,
+        max_age=1800,
+        secure=False,  # Set to True in production with HTTPS
+        samesite='lax'
+    )
+
     return {"access_token": access_token, "token_type": "bearer"}
