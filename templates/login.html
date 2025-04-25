@@ -55,42 +55,30 @@
     <script src="{{ url_for('static', path='script.js') }}"></script>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-            const formData = new FormData(this);
-            const response = await fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams(formData).toString()
-            });
-
-            // Replace the current success handler with:
-if (response.ok) {
-    const { access_token } = await response.json();
-
-    // Store token multiple ways for reliability
-    localStorage.setItem('access_token', access_token);
-    sessionStorage.setItem('access_token', access_token);
-
-    // Create hidden form to pass token securely
-    const form = document.createElement('form');
-    form.method = 'GET';
-    form.action = '/dashboard';
-    form.style.display = 'none';
-
-    const tokenInput = document.createElement('input');
-    tokenInput.type = 'hidden';
-    tokenInput.name = 'token';
-    tokenInput.value = access_token;
-
-    form.appendChild(tokenInput);
-    document.body.appendChild(form);
-    form.submit();
-}
+    try {
+        const response = await fetch('/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(new FormData(this)),
+            credentials: 'include'  // Crucial for cookies
         });
-    </script>
+
+        if (response.ok) {
+            window.location.href = '/dashboard';
+        } else {
+            const error = await response.json();
+            alert(error.detail || 'Login failed');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('Login failed. Please try again.');
+    }
+});
+</script>
 </body>
 </html>

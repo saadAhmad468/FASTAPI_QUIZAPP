@@ -1,17 +1,22 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from backend import auth, quiz, admin
-from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 
-from backend.database import Base, engine
-
+templates = Jinja2Templates(directory="templates")
 app = FastAPI()
 
-# Setup templates
-templates = Jinja2Templates(directory="templates")
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Mount routers
+# Include routers
 app.include_router(auth.router)
 app.include_router(quiz.router)
 app.include_router(admin.router)
@@ -30,10 +35,3 @@ async def login_page(request: Request):
 @app.get("/register")
 async def register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
-
-# Add this at the bottom of database.py
-def init_db():
-    Base.metadata.create_all(bind=engine)
-
-if __name__ == "__main__":
-    init_db()
