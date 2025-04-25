@@ -1,0 +1,52 @@
+<!-- templates/admin_panel.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3 class="text-center">Admin Panel - Add Questions</h3>
+                </div>
+                <div class="card-body">
+                    <form id="addQuestionForm">
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <input type="text" class="form-control" id="category" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Question Text</label>
+                            <textarea class="form-control" id="questionText" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correct Answer</label>
+                            <input type="text" class="form-control" id="correctAnswer" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Add Question</button>
+                    </form>
+
+                    <hr>
+
+                    <h4 class="mt-4">Existing Questions</h4>
+                    <ul class="list-group">
+                        {% for question in questions %}
+                        <li class="list-group-item">
+                            <strong>{{ question.category }}</strong>: {{ question.question_text }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html>
